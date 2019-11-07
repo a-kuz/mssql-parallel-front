@@ -1,24 +1,11 @@
-# ws
+# ФРОНТ для [сервера на WebSockets для выполнения запросов на всех ТТ]: https://gitlab.cd.local/k/mssql-parrallel-ws-server
+`Vue | Vuetify | WebSockets client`
 
-## Project setup
-```
-yarn install
-```
+## Скриншоты
 
-### Compiles and hot-reloads for development
-```
-yarn serve
-```
+![](gif.gif)
 
-### Compiles and minifies for production
-```
-yarn build
-```
 
-### Lints and fixes files
-```
-yarn lint
-```
+## Демка
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+http://10.1.2.2:8087 ( может не работать, обращайтесь)
