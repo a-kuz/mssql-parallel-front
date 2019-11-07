@@ -12,8 +12,8 @@
       >
         <span class="mr-2">Выполнение SQL на всех ТТ</span>
         <v-icon>mdi-database</v-icon>
-      </v-btn> </v-app-bar>
-    
+      </v-btn>
+    </v-app-bar>
 
     <v-content>
       <ExecuteTsql />
@@ -22,12 +22,11 @@
 </template>
 
 <script>
-
 import ExecuteTsql from "./components/ExecuteTsql.vue";
 
 export default {
   name: "App",
-  components:{ExecuteTsql},
+  components: { ExecuteTsql },
 
   data: () => ({
     //
