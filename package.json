@@ -5,7 +5,8 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "lint": "vue-cli-service lint",
+    "start": "vue-cli-service serve"
   },
   "dependencies": {
     "@types/socket.io-client": "^1.4.32",
@@ -55,7 +56,9 @@
     "> 1%",
     "last 2 versions"
   ],
- 
+  "gitHooks": {
+    "pre-commit": "lint-staged"
+  },
   "lint-staged": {
     "*.{js,vue}": [
       "vue-cli-service lint",
