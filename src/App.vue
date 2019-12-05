@@ -1,7 +1,5 @@
 <template>
   <v-app>
-   
-
     <v-content>
       <ExecuteTsql />
     </v-content>
