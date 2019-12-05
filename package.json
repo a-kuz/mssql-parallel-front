@@ -39,10 +39,9 @@
       "node": true
     },
     "extends": [
-      "plugin:vue/essential",
+      "plugin:vue/recommended",
       "@vue/prettier"
     ],
-    "rules": {},
     "parserOptions": {
       "parser": "babel-eslint"
     }
@@ -57,12 +56,12 @@
     "last 2 versions"
   ],
   "gitHooks": {
-    "pre-commit": "lint-staged"
+    
   },
   "lint-staged": {
     "*.{js,vue}": [
-      "vue-cli-service lint",
-      "git add"
+      
+      
     ]
   }
 }

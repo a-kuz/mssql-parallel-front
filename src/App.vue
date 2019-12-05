@@ -7,7 +7,7 @@
 </template>
 
 <script>
-import ExecuteTsql from "./components/ExecuteTsql.vue";
+import ExecuteTsql from "./components/ExecuteTsql.vue"
 
 export default {
   name: "App",
@@ -16,6 +16,6 @@ export default {
   data: () => ({
     //
   })
-};
+}
 </script>
 ,
