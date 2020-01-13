@@ -1,7 +1,7 @@
 {
-  "name": "ws",
+  "name": "ws-vue",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
@@ -9,23 +9,24 @@
     "start": "vue-cli-service serve"
   },
   "dependencies": {
-    "@types/socket.io-client": "^1.4.32",
-    "core-js": "^2.6.5",
-    "neo-async": "^2.6.1",
     "socket.io-client": "^2.3.0",
     "vue": "^2.6.10",
     "vuetify": "^2.1.0"
   },
   "devDependencies": {
+    "@types/socket.io-client": "^1.4.32",
     "@vue/cli-plugin-babel": "^3.12.0",
     "@vue/cli-plugin-eslint": "^3.12.0",
+    "@vue/cli-plugin-router": "^4.1.2",
     "@vue/cli-service": "^3.12.0",
     "@vue/eslint-config-prettier": "^5.0.0",
     "babel-eslint": "^10.0.1",
+    "core-js": "^2.6.5",
     "eslint": "^5.16.0",
     "eslint-plugin-prettier": "^3.1.0",
     "eslint-plugin-vue": "^5.0.0",
     "lint-staged": "^8.1.5",
+    "neo-async": "^2.6.1",
     "prettier": "^1.18.2",
     "sass": "^1.19.0",
     "sass-loader": "^8.0.0",
@@ -55,13 +56,8 @@
     "> 1%",
     "last 2 versions"
   ],
-  "gitHooks": {
-    
-  },
+  "gitHooks": {},
   "lint-staged": {
-    "*.{js,vue}": [
-      
-      
-    ]
+    "*.{js,vue}": []
   }
 }

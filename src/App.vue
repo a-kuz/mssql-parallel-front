@@ -1,21 +1,21 @@
 <template>
-  <v-app>
-    <v-content>
-      <ExecuteTsql />
-    </v-content>
-  </v-app>
+	<v-app>
+		<v-content>
+			<ExecuteTsql />
+		</v-content>
+	</v-app>
 </template>
 
 <script>
-import ExecuteTsql from "./components/ExecuteTsql.vue"
+import ExecuteTsql from "./components/ExecuteTsql.vue";
 
 export default {
-  name: "App",
-  components: { ExecuteTsql },
+	name: "App",
+	components: { ExecuteTsql },
 
-  data: () => ({
-    //
-  })
-}
+	data: () => ({
+		//
+	})
+};
 </script>
-,
+
