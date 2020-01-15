@@ -1,21 +1,8 @@
 <template>
-	<v-app>
-		<v-content>
-			<ExecuteTsql />
-		</v-content>
+	<v-app id="app">
+		<router-link to="/"></router-link> |
+		<router-link to="/about">About</router-link>
+
+		<router-view />
 	</v-app>
 </template>
-
-<script>
-import ExecuteTsql from "./components/ExecuteTsql.vue";
-
-export default {
-	name: "App",
-	components: { ExecuteTsql },
-
-	data: () => ({
-		//
-	})
-};
-</script>
-

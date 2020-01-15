@@ -5,12 +5,12 @@
 				<v-flex xs12 fill-height>
 					<v-form target="blank_">
 						<v-textarea
+							v-model="sql"
 							class="mainTextArea"
 							tabindex="1"
 							outlined
 							auto-grow
 							autofocus
-							v-model="sql"
 							hint="Paste your T-SQL query => Push GO => Your query will executes on 250 instances!"
 							label="your SQL"
 							@input="input"
@@ -19,7 +19,6 @@
 				</v-flex>
 			</v-layout>
 		</v-layout>
-		<v-layout row wrap> </v-layout>
 	</v-container>
 </template>
 
@@ -39,6 +38,10 @@ export default {
 </script>
 
 <style lang="css">
-div .v-card {transition-duration: 1s }
-.mainTextArea {transition-duration: 1s}
+div .v-card {
+	transition-duration: 1s;
+}
+.mainTextArea {
+	transition-duration: 1s;
+}
 </style>

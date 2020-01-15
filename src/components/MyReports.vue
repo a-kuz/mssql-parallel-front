@@ -21,15 +21,7 @@
 
 		<v-app-bar app clipped-left :dense="denseTable">
 			<v-app-bar-nav-icon @click="appNavClick"></v-app-bar-nav-icon>
-			<v-btn
-				icon
-				:loading="isDone != true && isStarted"
-				:color="isDone ? 'primary' : 'white'"
-				@click="submit"
-			>
-				<v-icon color="green">mdi-play</v-icon>
-				{{ this.isDone ? "NEW" : this.isStarted ? "STOP" : "GO" }}
-			</v-btn>
+
 			<v-progress-linear
 				:active="isDone != true && isStarted"
 				:normalized-buffer="totalInstances"
@@ -43,7 +35,6 @@
 						totalInstances
 				}}
 			</v-progress-linear>
-
 			<v-tabs v-model="tab" right>
 				<v-tab router-link to="/dev">
 					T-SQL
@@ -53,80 +44,60 @@
 				</v-tab>
 			</v-tabs>
 		</v-app-bar>
-		<v-banner v-model="banner" single-line>
-			{{ wsState }}
-			<template v-slot:actions>
-				<v-btn text @click="banner = false">close</v-btn>
-			</template>
-		</v-banner>
-		<v-flex column>
-			<sql-text-area v-show="!isStarted"></sql-text-area>
 
-			<v-flex v-if="!isStarted" full-width row wrap>
-				<v-flex
-					v-for="h in history"
-					:key="h.text"
-					pa-2
-					class="cls"
-				>
-					<v-card
-						:class="{
-							'outlined elevation-24 animated': h.full,
-							'flat tile': !h.full
-						}"
-						hover
-						@click="cardClick(h)"
-					>
-						<v-card-text>
-							<pre>
-							<v-flex class ="sql">{{h.text.trim().toUpperCase()}}
-								<!-- <span class="sql"
-									v-for="(t, i) in h.text.split(String.fromCharCode(10))"
-									:key="i"
-
-								>
-									<span v-if="i <= 11 || h.full">
-										{{ t.toUpperCase() }}
-
-										<v-flex
-											v-if="
-												(i == 11 && !h.full) ||
-													(h.full &&
-														i ==
-															h.text.split(String.fromCharCode(10)).length - 1)
-											"
-											class="sql"
-
-											flex-column
-											reverse
-											flex-end
-
-
-										> -->
-
-
-
-										<!-- </v-flex> -->
-
-									<!-- </span>
-								</span> -->
-							</v-flex>
-							</pre>
-						</v-card-text>
-					</v-card>
-				</v-flex>
+		<v-flex row>
+			<v-flex
+				v-for="report in reports"
+				:key="report.id"
+				pa-2
+				justify-start
+				align-start
+			>
+				<v-card ripple hover @click.native="doIt(report)">
+					<v-card-title>
+						{{ report.title }}
+					</v-card-title>
+					<v-divider></v-divider>
+					<v-card-text vcardtex class="sql"
+						>{{ report.description }}
+					</v-card-text>
+					<v-flex right align-content-end justify-end row>
+						<v-spacer></v-spacer>
+						<v-card-actions>
+							<v-btn flat outlined>
+								<v-icon color="green">mdi-play</v-icon>
+								СФОРМИРОВАТЬ
+							</v-btn>
+						</v-card-actions>
+					</v-flex>
+				</v-card>
 			</v-flex>
 		</v-flex>
 
-		<v-flex>
+		<v-flex pa-1>
+			<v-card >
+
+
 			<my-data-table
+				:dense-table="denseTable"
 				v-if="isStarted"
 				:items="items"
 				:headers="headers"
 				:headers-edited="headersEdited"
 				:all-headers="allHeaders"
 			></my-data-table>
+
+
+
+
+	</v-card>
+	<v-container grid-list-xs>
+
+
 			<v-combobox
+			ma-2
+			pa-2
+
 				v-if="isStarted"
 				v-model="headersEdited"
 				chips
@@ -145,24 +116,25 @@
 					>
 				</template>
 			</v-combobox>
+</v-container>
+
 		</v-flex>
 	</v-container>
 </template>
 <script>
 import * as ws from "socket.io-client";
-import SqlTextArea from "./SqlTextArea.vue";
 import MyDataTable from "./MyDataTable.vue";
-
+import Reports from "../reports.js";
 export default {
 	wsCli: undefined,
-	name: "ExecuteTsql",
-	components: { SqlTextArea, MyDataTable },
+	name: "MyReports",
+	components: { MyDataTable },
 
 	data: () => ({
 		isStarted: false,
+		tab: 1,
 		banner: false,
 		timerId: 0,
-		tab: 0,
 		wsState: "not started",
 		footerProps: {
 			"disable-pagination": false,
@@ -181,7 +153,8 @@ export default {
 		drawer: false,
 		groupBy: [],
 		progress: { bufferValue: 0, value: 0 },
-		totalInstances: 0
+		totalInstances: 0,
+		reports: Reports
 	}),
 	computed: {
 		dark: {
@@ -207,27 +180,15 @@ export default {
 		});
 
 		this.connect();
-		this.wsCli.emit("history");
-		this.wsCli.on("history", history => {
-			this.history.push(history);
-			this.history = this.history.flat().filter(e => {
-				return e.text.length > 10;
-			});
-		});
 	},
+
 	methods: {
-		setClipboard(h) {
-			window.navigator.clipboard.writeText(h);
+		doIt(report) {
+			this.sql = report.sql;
+
+			this.submit();
 		},
-		async lazyText() {
-			try {
-				return window.Vue.find(a => {
-					return a.$options._componentTag == "v-data-table";
-				}).$data.internalGroupBy;
-			} catch (e) {
-				console.error(e);
-			}
-		},
+
 		appNavClick() {
 			this.drawer = !this.drawer;
 			globalThis.Vue = this;
@@ -259,20 +220,13 @@ export default {
 				reconnectionDelay: 80
 			});
 		},
-		cardClick(item) {
-			this.sql = item.h;
-			window.Vue.$children.filter(e => {
-				return e.sql !== undefined;
-			})[0].sql = item.text;
-		},
+
 		async submit() {
 			var wsCli = this.wsCli;
 			try {
 				clearInterval(this.timerId);
 			} catch (error) {}
-			let sql = window.Vue.$children.filter(e => {
-				return e.sql !== undefined;
-			})[0].sql;
+			let sql = this.sql;
 			this.wsState = sql;
 			if (wsCli === undefined) {
 				wsCli = ws.connect("ws://10.1.2.2:3002", {
@@ -282,13 +236,6 @@ export default {
 				});
 
 				this.isStarted = true;
-			} else if (wsCli.connected || this.isDone) {
-				this.isDone = false;
-				this.isStarted = false;
-				wsCli.disconnect();
-				wsCli.removeAllListeners();
-
-				return;
 			} else {
 				this.items = [];
 				this.buffer = [];
@@ -344,7 +291,9 @@ export default {
 </script>
 <style>
 .cls {
-	max-width: 500px;
+
+	width: 100%;
+	min-width: fit-content;
 	align-content: flex-end;
 	display: flexbox;
 }
@@ -362,20 +311,23 @@ export default {
 	}
 
 	50% {
-		background-color: rgba(111, 99, 99, 1);
+		background-color: rgba(99, 99, 99, 1);
 	}
 }
 
 .animated {
-	animation: anime infinite 4s ease !important;
+	animation: anime infinite 6s ease !important;
 }
+
 .sql {
 	font-family: "Roboto mono", Consolas;
-		max-width: 450px;
 	white-space: pre;
 	overflow: hidden;
 	text-overflow: ellipsis;
-
+	overflow-anchor: none;
 	overflow-wrap: break-word;
+}
+.card {
+	min-width: 0px;
 }
 </style>
