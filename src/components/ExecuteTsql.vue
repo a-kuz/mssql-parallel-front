@@ -1,33 +1,22 @@
 <template>
-	<v-container>
-		<v-navigation-drawer v-model="drawer" clipped app width="130">
-			<v-list-item>
-				<v-list-item-content>
-					<v-switch v-model="denseTable" label="small" tabindex="1"></v-switch>
-				</v-list-item-content>
-			</v-list-item>
-			<v-list-item>
-				<v-list-item-content>
-					<v-switch v-model="isStarted" tabindex="2" label="started"></v-switch>
-				</v-list-item-content>
-			</v-list-item>
-
-			<v-list-item>
-				<v-list-item-content>
-					<v-checkbox v-model="dark" dense label="dark"></v-checkbox>
-				</v-list-item-content>
-			</v-list-item>
-		</v-navigation-drawer>
-
+	<v-layout pa-1 ma-1>
 		<v-app-bar app clipped-left :dense="denseTable">
-			<v-app-bar-nav-icon @click="appNavClick"></v-app-bar-nav-icon>
 			<v-btn
-				icon
-				:loading="isDone != true && isStarted"
-				:color="isDone ? 'primary' : 'white'"
+				:loading="!isDone  && isStarted"
+				type="link"
+				:color="isDone ? 'primary' : ''"
 				@click="submit"
+				:disabled="!canDo"
+				absolute
+				fixed
+				color="red"
 			>
-				<v-icon color="green">mdi-play</v-icon>
+
+				<v-icon v-if="isDone">mdi-home</v-icon>
+				<v-icon v-if="!isStarted">mdi-play</v-icon>
+				<v-icon v-else-if="!isDone">mdi-stop</v-icon>
+
+
 				{{ this.isDone ? "NEW" : this.isStarted ? "STOP" : "GO" }}
 			</v-btn>
 			<v-progress-linear
@@ -36,6 +25,7 @@
 				color="primary"
 				v-bind="progress"
 				height="30"
+				full-width
 			>
 				{{
 					Math.round((progress.value * totalInstances) / 100) +
@@ -44,6 +34,49 @@
 				}}
 			</v-progress-linear>
 
+			<v-dialog v-model="PreferencesDialog" max-width="650px">
+				<template v-slot:activator="{ on }">
+					<v-btn v-on="on" slot="activator" icon
+						><v-icon>mdi-settings</v-icon>
+					</v-btn>
+				</template>
+				<v-card>
+					<v-card-title>
+						<span class="headline">Settings</span>
+					</v-card-title>
+					<v-card-text>
+						<v-container grid-list-md>
+							<v-form>
+								<v-text-field
+									label="backend"
+									v-model="backendUrl"
+									hint="ws://10.1.2.2:3002"
+								>
+								</v-text-field>
+
+								<v-switch v-model="denseTable" label="Small table"></v-switch>
+								<v-switch
+									v-model="showGroupBy"
+									label="Grouping feature"
+								></v-switch>
+
+								<v-switch v-model="dark" dense label="dark"></v-switch>
+							</v-form>
+						</v-container>		
+					</v-card-text>
+
+					<v-card-actions>
+						<v-spacer></v-spacer>
+
+						<v-btn
+							color="blue darken-1"
+							text
+							@click.native="PreferencesDialog = false"
+							>Save</v-btn
+						>
+					</v-card-actions>
+				</v-card>
+			</v-dialog>
 			<v-tabs v-model="tab" right>
 				<v-tab router-link to="/dev">
 					T-SQL
@@ -53,74 +86,65 @@
 				</v-tab>
 			</v-tabs>
 		</v-app-bar>
+
 		<v-banner v-model="banner" single-line>
 			{{ wsState }}
 			<template v-slot:actions>
 				<v-btn text @click="banner = false">close</v-btn>
 			</template>
 		</v-banner>
-		<v-flex column>
-			<sql-text-area v-show="!isStarted"></sql-text-area>
 
-			<v-flex v-if="!isStarted" full-width row wrap>
+		<v-flex column v-show="!isStarted">
+			<sql-text-area> </sql-text-area>
+
+			<v-flex v-if="!isStarted" row wrap>
 				<v-flex
 					v-for="h in history"
 					:key="h.text"
-					pa-2
-					class="cls"
+					:class="{
+						'active-card-container': h.full,
+						'card-container': !h.full
+					}"
+					:pa-2="!h.full"
+					:pa-5="h.full"
 				>
 					<v-card
 						:class="{
-							'outlined elevation-24 animated': h.full,
-							'flat tile': !h.full
+							'fill-height active-card  elevation-24 animated': h.full,
+							'card fill-height': !h.full
 						}"
 						hover
 						@click="cardClick(h)"
 					>
-						<v-card-text>
-							<pre>
-							<v-flex class ="sql">{{h.text.trim().toUpperCase()}}
-								<!-- <span class="sql"
-									v-for="(t, i) in h.text.split(String.fromCharCode(10))"
-									:key="i"
-
-								>
-									<span v-if="i <= 11 || h.full">
-										{{ t.toUpperCase() }}
-
-										<v-flex
-											v-if="
-												(i == 11 && !h.full) ||
-													(h.full &&
-														i ==
-															h.text.split(String.fromCharCode(10)).length - 1)
-											"
-											class="sql"
-
-											flex-column
-											reverse
-											flex-end
-
-
-										> -->
-
-
-
-										<!-- </v-flex> -->
-
-									<!-- </span>
-								</span> -->
-							</v-flex>
-							</pre>
-						</v-card-text>
+						<v-layout column fill-height>
+							<v-card-text>
+								<v-flex
+									full-width
+									:class="{ sql: !h.full, 'active-card-text': h.full }"
+									>{{ h.text.trim().toUpperCase() }}
+								</v-flex>
+							</v-card-text>
+							<v-layout full-height column>
+								<v-flex column full-height d-flex height="1000px"
+									><div><v-spacer></v-spacer></div
+								></v-flex>
+							</v-layout>
+							<v-layout align-content-end align-end column justify-end>
+								<v-card-actions>
+									<v-btn icon color="light-green">
+										<v-icon @click.native="h.full = !h.full">mdi-more</v-icon>
+									</v-btn>
+								</v-card-actions>
+							</v-layout>
+						</v-layout>
 					</v-card>
 				</v-flex>
 			</v-flex>
 		</v-flex>
-
 		<v-flex>
 			<my-data-table
 				v-if="isStarted"
+				:showGroupBy="showGroupBy"
 				:items="items"
 				:headers="headers"
 				:headers-edited="headersEdited"
@@ -146,19 +170,21 @@
 				</template>
 			</v-combobox>
 		</v-flex>
-	</v-container>
+	</v-layout>
 </template>
 <script>
 import * as ws from "socket.io-client";
 import SqlTextArea from "./SqlTextArea.vue";
 import MyDataTable from "./MyDataTable.vue";
-
 export default {
 	wsCli: undefined,
 	name: "ExecuteTsql",
 	components: { SqlTextArea, MyDataTable },
-
 	data: () => ({
+		PreferencesDialog: false,
+		canDo_: false,
+		showGroupBy: false,
+		backendUrl: `ws://10.1.2.2:3002`,
 		isStarted: false,
 		banner: false,
 		timerId: 0,
@@ -186,11 +212,29 @@ export default {
 	computed: {
 		dark: {
 			get() {
-				return this.$vuetify.theme.dark;
+				return this.$vuetify.theme.dark || true;
 			},
 			set(v) {
 				this.$vuetify.theme.dark = v;
 			}
+		},
+		canDo: {
+			get() {
+				if (this.canDo_) {return true}
+				let pre_sql = window.Vue.$children.filter(e => {
+					return e.sql !== undefined;
+				})[0];
+				console.log(pre_sql)
+				if (pre_sql != undefined) {
+					return (pre_sql.sql.length > 5 ? true : false)
+				}
+				return false
+			},set(v){
+				this.canDo_ = v;
+
+			}
+
+
 		}
 	},
 	beforeCreate() {
@@ -198,14 +242,15 @@ export default {
 		window.wsCli = this.wsCli;
 		this.$on("inputSQL", value => {
 			this.wsState = value;
+			this.updateCanDo();
+
+			console.log(value);
 		});
 	},
-
 	mounted() {
 		this.$on("inputSQL", value => {
 			this.wsState = value;
 		});
-
 		this.connect();
 		this.wsCli.emit("history");
 		this.wsCli.on("history", history => {
@@ -216,6 +261,15 @@ export default {
 		});
 	},
 	methods: {
+		updateCanDo(){
+			let pre_sql = window.Vue.$children.filter(e => {
+					return e.sql !== undefined;
+				})[0];
+
+				if (pre_sql != undefined) {
+					this.canDo = (pre_sql.sql.length > 5 ? true : false)
+				}
+		},
 		setClipboard(h) {
 			window.navigator.clipboard.writeText(h);
 		},
@@ -253,7 +307,7 @@ export default {
 			});
 		},
 		async connect() {
-			this.wsCli = ws.connect("ws://10.1.2.2:3002", {
+			this.wsCli = ws.connect(this.backendUrl, {
 				randomizationFactor: 0.1,
 				reconnectionDelayMax: 700,
 				reconnectionDelay: 80
@@ -261,6 +315,7 @@ export default {
 		},
 		cardClick(item) {
 			this.sql = item.h;
+			this.canDo = true;
 			window.Vue.$children.filter(e => {
 				return e.sql !== undefined;
 			})[0].sql = item.text;
@@ -275,19 +330,17 @@ export default {
 			})[0].sql;
 			this.wsState = sql;
 			if (wsCli === undefined) {
-				wsCli = ws.connect("ws://10.1.2.2:3002", {
+				wsCli = ws.connect(this.backendUrl, {
 					randomizationFactor: 0.1,
 					reconnectionDelayMax: 700,
 					reconnectionDelay: 80
 				});
-
 				this.isStarted = true;
 			} else if (wsCli.connected || this.isDone) {
 				this.isDone = false;
 				this.isStarted = false;
 				wsCli.disconnect();
 				wsCli.removeAllListeners();
-
 				return;
 			} else {
 				this.items = [];
@@ -295,7 +348,7 @@ export default {
 				this.headers = [];
 				this.allHeaders = [];
 				this.headersEdited = [];
-				wsCli = ws.connect("ws://10.1.2.2:3002");
+				wsCli = ws.connect(this.backendUrl);
 				this.isStarted = true;
 				this.isDone = false;
 			}
@@ -328,7 +381,7 @@ export default {
 									selected: false,
 									filterable: true
 								};
-								if (e !== "id") {
+								if (e !== "id" && e !== "ib_href") {
 									this.headers.push(h);
 									this.allHeaders.push(h);
 									this.headersEdited.push(h);
@@ -342,11 +395,26 @@ export default {
 	}
 };
 </script>
-<style>
-.cls {
-	max-width: 500px;
-	align-content: flex-end;
-	display: flexbox;
+<style scoped>
+.card {
+}
+
+.card-container {
+	max-width: 400px;
+}
+
+.active-card-container {
+	max-width: 1000px;
+
+	max-height: max-content;
+}
+
+.active-card-text {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: pre;
+	overflow-wrap: break-word;
+	font-family: "Roboto mono", Consolas, "fira code", monospace;
 }
 .cls2 {
 	inline-size: initial;
@@ -358,24 +426,27 @@ export default {
 }
 @keyframes anime {
 	0% {
-		background-color: rgba(66, 66, 66, 1);
+		background-color: rgba(99, 99, 99, 1);
 	}
-
+	30% {
+		background-color: rgba(100, 144, 144, 1);
+	}
 	50% {
-		background-color: rgba(111, 99, 99, 1);
+		background-color: rgba(99, 111, 100, 1);
+	}
+	70% {
+		background-color: rgba(99, 100, 144, 1);
 	}
 }
-
 .animated {
-	animation: anime infinite 4s ease !important;
+	animation: anime infinite 7s !important;
 }
 .sql {
-	font-family: "Roboto mono", Consolas;
-		max-width: 450px;
+	font-family: "Roboto mono", Consolas, "fira code", monospace;
+
 	white-space: pre;
 	overflow: hidden;
 	text-overflow: ellipsis;
-
 	overflow-wrap: break-word;
 }
 </style>

@@ -1,18 +1,22 @@
 <template>
 	<v-container>
-		<v-layout column>
-			<v-layout row>
-				<v-flex xs12 fill-height>
+		<v-layout column >
+			<v-layout row >
+				<v-flex xs12 fill-height >
 					<v-form target="blank_">
+
 						<v-textarea
+solo
+							promary
 							v-model="sql"
 							class="mainTextArea"
 							tabindex="1"
-							outlined
+
 							auto-grow
 							autofocus
 							hint="Paste your T-SQL query => Push GO => Your query will executes on 250 instances!"
 							label="your SQL"
+							persistent-hint
 							@input="input"
 						></v-textarea>
 					</v-form>
@@ -43,5 +47,10 @@ div .v-card {
 }
 .mainTextArea {
 	transition-duration: 1s;
+	font-family: consolas, monospace;
+	text-emphasis: f;
+
+
+
 }
 </style>
