@@ -34,9 +34,10 @@
 			<v-dialog v-model="PreferencesDialog" max-width="650px">
 				<template v-slot:activator="{ on }">
 					<v-btn v-on="on" slot="activator" icon
-						><v-icon>mdi-settings</v-icon>
+						><v-icon>mdi-apps</v-icon>
 					</v-btn>
 				</template>
+
 				<v-card>
 					<v-card-title>
 						<span class="headline">Settings</span>
@@ -47,15 +48,17 @@
 								<v-text-field
 									label="backend"
 									v-model="backendUrl"
-									hint="ws://10.1.2.2:3002"
+									hint="ws://report.cd.local:3002"
 								>
 								</v-text-field>
 
 								<v-switch v-model="denseTable" label="Small table"></v-switch>
 
 								<v-switch v-model="dark" label="dark"></v-switch>
-								<v-switch v-model="calculateWidths" label="calculateWidths"></v-switch>
-
+								<v-switch
+									v-model="calculateWidths"
+									label="calculateWidths"
+								></v-switch>
 							</v-form>
 						</v-container>
 					</v-card-text>
@@ -65,7 +68,6 @@
 
 						<v-btn
 							color="blue darken-1"
-
 							@click.native="PreferencesDialog = false"
 							>Save</v-btn
 						>
@@ -73,19 +75,6 @@
 				</v-card>
 			</v-dialog></v-app-bar
 		>
-
-
-		<v-alert
-			v-for="alert in alerts"
-			:key="alert.key"
-			border="left"
-			:type="alert.type"
-			:dismissible="alert.dismissible"
-			@input.native="deleteAlert(alert)"
-			@click.native="deleteAlert(alert)"
-		>
-			{{ alert.text }}
-		</v-alert>
 
 		<v-flex row pa-2>
 			<v-flex
@@ -100,8 +89,14 @@
 				<v-card
 					outlined
 					ripple
-					hover
+					:disabled="
+						report.disabled > 0 &&
+							new Date().getHours() > 8 &&
+							new Date().getHours() < 23
+					"
+					:clickable="!report.disabled"
 					@click.native="doIt(report)"
+					hover
 					:class="{
 						'fill-height selected-card card  elevation-24  ': report.selected,
 						'fill-height  card elevation-1 ': !report.selected
@@ -110,36 +105,54 @@
 					<v-layout column>
 						<v-card-title class="title ">
 							<v-layout row px-2>
-								{{ report.title }}
+								<v-btn flat icon color="primary" disabled> </v-btn>
+								<span> {{ report.title }}</span>
 
 								<v-spacer></v-spacer>
 								<v-layout column align-content-start justify-start align-end>
-									<v-btn
+									<v-badge
 										right
-										:class="{
-											'v-btn--outlined': report.selected,
-											'elevation-12': !report.selected
-										}"
-										:color="report.color"
-
-										:clickable="!report.selected"
-										v-if="!isStarted || !report.selected || isDone"
+										overlap
+										large
+										color="red"
+										v-if="
+											report.disabled > 0 &&
+												new Date().getHours() > 8 &&
+												new Date().getHours() < 23
+										"
 									>
-										<v-icon
-											left
-											color="success"
-											v-if="report.selected && isDone"
-											>mdi-check</v-icon
+										<v-icon slot="badge" color="white">
+											mdi-build
+										</v-icon>
+										<!-- <v-icon large color="primary">icon</v-icon> -->
+
+										<v-btn
+											right
+											@click.native="doIt(report)"
+											:class="{
+												'v-btn--outlined': report.selected,
+												'elevation-12': !report.selected
+											}"
+											:color="report.color"
+											:clickable="!report.selected"
+											v-if="!isStarted || !report.selected || isDone || 1"
 										>
-										<v-icon left v-else-if="report.selected && !isDone"
-											>mdi-loading</v-icon
-										>
-										<v-icon left v-else>mdi-play</v-icon>
-										<bl v-if="report.selected && isDone">{{
-											" " + items.length + " rows "
-										}}</bl>
-										<bl v-else>СФОРМИРОВАТЬ</bl>
-									</v-btn>
+											<v-icon
+												left
+												color="success"
+												v-if="report.selected && isDone"
+												>mdi-check</v-icon
+											>
+											<v-icon left v-else-if="report.selected && !isDone"
+												>mdi-loading</v-icon
+											>
+											<v-icon left v-else>mdi-play</v-icon>
+											<bl v-if="report.selected && isDone">{{
+												" " + items.length + " rows "
+											}}</bl>
+											<bl v-else>СФОРМИРОВАТЬ</bl>
+										</v-btn>
+									</v-badge>
 								</v-layout>
 
 								<v-btn
@@ -159,23 +172,31 @@
 							:normalized-buffer="totalInstances"
 							v-bind="progress"
 							color="primary"
-
-							height=20
+							height="20"
 						>
-						  <template v-slot="{ value }">
-        <strong>{{
-								Math.round((progress.value * totalInstances) / 100) +
-									" / " +
-									totalInstances
-							 }}</strong>
-      </template>
-
+							<template v-slot="{ value }">
+								<strong>{{
+									Math.round((progress.value * totalInstances) / 100) +
+										" / " +
+										totalInstances
+								}}</strong>
+							</template>
 						</v-progress-linear>
 						<v-card-text vcardtex class=" body-3 sql flex-sm-shrink-0">{{
 							report.description.trim()
 						}}</v-card-text>
 						<v-row fill-height></v-row>
-						<v-space></v-space>
+
+						<v-layout row wrap pa-5 xs1 v-if="report.selected">
+							<v-tooltip top v-for="alert in alerts">
+								<template v-slot:activator="{ on }">
+									<v-chip color="error" v-on="on" ma-2>
+										{{ alert.ib }}</v-chip
+									></template
+								>
+								<span>{{ alert.text }}</span>
+							</v-tooltip>
+						</v-layout>
 					</v-layout>
 					<v-layout align-center pa-2>
 						<code v-if="isStarted && !isDone && report.selected">{{
@@ -196,7 +217,7 @@
 					:headers="headers"
 					:headers-edited="headersEdited"
 					:all-headers="allHeaders"
-			></my-data-table>
+				></my-data-table>
 			</v-card>
 			<v-container grid-list-xs>
 				<v-combobox
@@ -234,10 +255,10 @@ export default {
 	components: { MyDataTable },
 
 	data: () => ({
-		calculateWidths:true,
+		calculateWidths: true,
 		serverList: [],
 		PreferencesDialog: false,
-		backendUrl: `ws://10.1.2.2:3002`,
+		backendUrl: `ws://report.cd.local:3002`,
 		isStarted: false,
 		tab: 1,
 		banner: false,
@@ -290,7 +311,7 @@ export default {
 		this.connect();
 		this.wsCli.emit("serverList");
 		this.wsCli.on("serverList", serverList => {
-			console.log("serverList:", serverList);
+			// console.log("serverList:", serverList);
 			this.serverList = serverList;
 		});
 	},
@@ -299,9 +320,9 @@ export default {
 		deleteAlert(alert) {
 			this.alerts = this.alerts.filter(e => e.key != alert.key);
 		},
-		alert(text, type) {
-			let key = Math.round(Math.random() * 10000);
-			let alert = { text, key, error: true, dismissible: true, type };
+		alert(text, type, ib) {
+			let key = this.alerts.length + 1;
+			let alert = { text, key, error: true, dismissible: true, type, ib };
 			this.alerts.push(alert);
 		},
 		errorMessage(text) {
@@ -327,7 +348,7 @@ export default {
 			this.headers = this.allHeaders;
 		},
 		select(item) {
-			console.log(item);
+			// console.log(item);
 		},
 		async updateTable() {
 			let copyOfBuffer = this.buffer.filter(() => {
@@ -347,11 +368,63 @@ export default {
 		},
 
 		async submit() {
+			this.alerts = [];
+			this.progress = { bufferValue: 0, value: 0 };
+
 			var wsCli = this.wsCli;
 			try {
 				clearInterval(this.timerId);
 			} catch (error) {}
 			let sql = this.sql;
+			if (sql.substr(0, 4) == "http") {
+				this.reports.forEach(e => {
+					e.selected = sql == e.sql ? 1 : 0;
+					e.color = "";
+				});
+				this.items = [];
+				this.buffer = [];
+				this.headers = [];
+				this.allHeaders = [];
+				this.headersEdited = [];
+				this.isStarted = true;
+				this.isDone = false;
+
+				let response = await fetch(sql);
+				console.log(response);
+				if (response.ok) {
+					// если HTTP-статус в диапазоне 200-299
+					// получаем тело ответа (см. про этот метод ниже)
+
+					let json = await response.json();
+					console.log(json);
+					let items = json;
+					this.items = this.items.concat(items);
+
+					if (items.length > 0) {
+						let ev = items[0];
+						if (this.headers.length == 0) {
+							Object.keys(ev).forEach(e => {
+								let h = {
+									text: e,
+									value: e,
+									selected: false,
+									filterable: true
+								};
+								if (e !== "id" && e !== "ib_href") {
+									this.headers.push(h);
+									this.allHeaders.push(h);
+									this.headersEdited.push(h);
+								}
+							});
+						}
+					}
+					this.isDone = true;
+					return;
+				} else {
+					alert("Ошибка HTTP: " + response.status);
+					return;
+				}
+			}
 			this.reports.forEach(e => {
 				e.selected = sql == e.sql ? 1 : 0;
 				e.color = "";
@@ -386,16 +459,17 @@ export default {
 			wsCli.on("end", ev => {
 				clearInterval(this.timerId);
 				this.isDone = true;
-				this.progress= { bufferValue: 100, value: 100 }
+				this.progress = { bufferValue: 100, value: 100 };
 				this.reports.forEach(e => {
 					if (e.selected) {
 						e.color = "success";
 					}
 				});
 			});
-			wsCli.on("error", err => {
-				console.error(err);
-				alert(err);
+			wsCli.on("err", err => {
+				// console.error(err);
+				window.e = err;
+				this.alert(err.error.originalError, "error", err.ib);
 			});
 			wsCli.on("progress", async progressData => {
 				this.progress = progressData;

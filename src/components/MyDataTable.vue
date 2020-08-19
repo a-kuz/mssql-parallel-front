@@ -140,25 +140,8 @@ export default {
 			itemsPerPageOptions: [30, 100, 250, 2000, -1]
 		},
 		denseTable: true,
-		headers: [
-			{
-				text: "test",
-				value: "test"
-			}
-		],
-		items: [{ test: "test" }],
-		allHeaders: [
-			{
-				text: "test",
-				value: "test"
-			}
-		],
-		headersEdited: [
-			{
-				text: "test",
-				value: "test"
-			}
-		],
+
+
 
 		groupBy: []
 	}),

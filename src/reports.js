@@ -10,52 +10,53 @@ var reports = [{
 	Слип,
 	left(substring(right(ОТВЕТФН,50),PATINDEX('%"[а-Я][а-Я]%[а-Я][а-Я]"%', right(ОТВЕТФН,50))+1,100),charindex('"',substring(right(ОТВЕТФН,50),PATINDEX('%"[а-Я][а-Я]%[а-Я][а-Я]"%', right(ОТВЕТФН,50))+1,100))-1) Ошибка,
 
-	substring((select '; '+Наименование as [text()] from Документ_Заказ_Товары зт join Справочник_Товары т on зт.Товар = т.Ссылка where зт.Ссылка = п.Заказ_Ссылка order by НомерСтроки for xml path('')),2,1000) as товары,
+	substring((select '; '+Наименование as [text()] from Документ_Заказ_Товары зт (nolock) join Справочник_Товары т (nolock) on зт.Товар = т.Ссылка where зт.Ссылка = п.Заказ_Ссылка order by НомерСтроки for xml path('')),2,1000) as товары,
 	Рм.Наименование РМ,'HTTP://' + CAST(CAST(RIGHT(СПРИБ.КОД, 4) AS INT) AS VARCHAR(MAX)) + '-SERV.TT' + Р.НАИМЕНОВАНИЕ + '.LOCAL:85/SUP_KKM/RU#e1cib/data/Документ.ПротоколРасчетов?ref=' + CONVERT(VARCHAR(32), П.ССЫЛКА, 2) AS ref
 
 FROM
-	ДОКУМЕНТ_ПРОТОКОЛРАСЧЕТОВ П
-	JOIN ДОКУМЕНТ_ПРОТОКОЛРАСЧЕТОВ_ПРОТОКОЛ СТРОКИ ON СТРОКИ.ССЫЛКА = П.ССЫЛКА
-	JOIN СПРАВОЧНИК_ВАРИАНТЫОПЛАТЫ ВА ON ВА.ССЫЛКА = ВАРИАНТОПЛАТЫ
+	ДОКУМЕНТ_ПРОТОКОЛРАСЧЕТОВ П (nolock)
+	JOIN ДОКУМЕНТ_ПРОТОКОЛРАСЧЕТОВ_ПРОТОКОЛ СТРОКИ (nolock) ON СТРОКИ.ССЫЛКА = П.ССЫЛКА
+	JOIN СПРАВОЧНИК_ВАРИАНТЫОПЛАТЫ ВА (nolock) ON ВА.ССЫЛКА = ВАРИАНТОПЛАТЫ
 	AND ВА.НАИМЕНОВАНИЕ = 'КАРТА'
-	JOIN СПРАВОЧНИК_ФИРМЫ Ф ON Ф.ССЫЛКА = ФИРМА
-	JOIN СПРАВОЧНИК_ИНФОРМАЦИОННЫЕБАЗЫ СПРИБ ON Ф.ИНФОРМАЦИОННАЯБАЗА = СПРИБ.ССЫЛКА
-	JOIN СПРАВОЧНИК_РЕГИОНЫ Р ON СПРИБ.РЕГИОН = Р.ССЫЛКА
-	JOIN Справочник_РабочиеМеста Рм ON п.РабочееМесто = Рм.ССЫЛКА
-	join РегистрСведений_ЗаказДопИнф зди on зди.Заказ = п.Заказ_Ссылка
-	join Перечисление_СтатусыЗаказа сз on сз.Ссылка = зди.Статус
+	JOIN СПРАВОЧНИК_ФИРМЫ Ф (nolock) ON Ф.ССЫЛКА = ФИРМА
+	JOIN СПРАВОЧНИК_ИНФОРМАЦИОННЫЕБАЗЫ СПРИБ (nolock) ON Ф.ИНФОРМАЦИОННАЯБАЗА = СПРИБ.ССЫЛКА
+	JOIN СПРАВОЧНИК_РЕГИОНЫ Р (nolock) ON СПРИБ.РЕГИОН = Р.ССЫЛКА
+	JOIN Справочник_РабочиеМеста Рм (nolock) ON п.РабочееМесто = Рм.ССЫЛКА
+	join РегистрСведений_ЗаказДопИнф зди (nolock) on зди.Заказ = п.Заказ_Ссылка
+	join Перечисление_СтатусыЗаказа сз (nolock) on сз.Ссылка = зди.Статус
 WHERE
 	СЛИП <> ''
 	AND ФИСКАЛИЗИРОВАН = 0
 	AND ДАТА > '20200101'
 	AND ДАТА < DATEADD(MINUTE, -15, GETDATE())
 	AND П.ПОМЕТКАУДАЛЕНИЯ = 0`,
-		selected: 0,
+		selected: 0, disabled:0,
 		description: ""
 	},
 	{
 		id: 10,
 		title: "Ошибки УТМ",
-		sql: `select * into #t from журналРегистрации_просмотр where событие = 'ЕГАИС'  AND ДАТА > DATEADD(DAY,-3,GETDATE())
-		select Дата,Комментарий,Сотрудник, Данные_Представление Заказ, Компьютер  from #t where комментарий like 'Запрос%проверка%'  AND ДАТА > DATEADD(DAY,-3,GETDATE()) order by дата desc`,
-		selected: 0,
+		sql: `
+select Дата,Комментарий,  Компьютер into #t from журналРегистрации (nolock) where  событие = 'ЕГАИС'  AND ДАТА > DATEADD(DAY,-3,GETDATE())
+		select Дата,Комментарий, Компьютер  from #t where комментарий like 'Запрос%проверка%'  AND ДАТА > DATEADD(DAY,-3,GETDATE()) order by дата desc
+
+`,
+		selected: 0, disabled:1,
 		description: "за последние 3 дня"
-	}
-	,{
+	}, {
 		id: 11,
 		title: "Ошибки EXCISE",
-		sql: `select * into #t from журналРегистрации_просмотр where событие = 'EXCISE.Повтор ПДФ'
-		select Дата, Комментарий  from #t WHERE ДАТА > DATEADD(DAY,-3,GETDATE()) And комментарий like '%этот ПДФ%'`,
-		selected: 0,
+		sql: `select Дата, Комментарий into #t from журналРегистрации (nolock) where событие = 'EXCISE.Повтор ПДФ' and ДАТА > DATEADD(DAY,-3,GETDATE())
+		select Дата, Комментарий  from #t WHERE  комментарий like '%этот ПДФ%'`,
+		selected: 0, disabled:1,
 		description: "за последние 3 дня"
-	}
-	,
+	},
 	{
 		id: 2,
 		title: "Отчеты ФО с суммой корр",
 		description: "",
-		sql: `select Дата, Номер, СуммаКорр from документ_отчетфо where СуммаКорр >0 and пометкаудаления = 0`,
-		selected: 0
+		sql: `select Дата, Номер, СуммаКорр from документ_отчетфо (nolock) where  СуммаКорр >0 and пометкаудаления = 0`,
+		selected: 0, disabled:0
 	},
 	{
 		id: 3,
@@ -68,9 +69,9 @@ WHERE
   , min(Откр.Дата) Дата
   , max(Откр.Дата) Дата2
 FROM
-  Документ_Касса_ОткрытиеСмены Откр
+  Документ_Касса_ОткрытиеСмены Откр (nolock)
 LEFT JOIN
-  Документ_Касса_ЗакрытиеСмены Закр
+  Документ_Касса_ЗакрытиеСмены Закр (nolock)
   ON Закр.СменаКассы = Откр.Ссылка
 WHERE
   Закр.Ссылка IS NULL
@@ -80,7 +81,7 @@ GROUP BY
 КассаНомер
 HAVING
 COUNT(DISTINCT ОТКР.Ссылка) > 1`,
-		selected: 0
+		selected: 0, disabled:0
 	},
 	{
 		id: 4,
@@ -96,14 +97,14 @@ COUNT(DISTINCT ОТКР.Ссылка) > 1`,
   , min(Откр.Дата) ДопИнфо_ДатаМин
   , max(Откр.Дата) ДопИнфо_ДатаМакс
 FROM
- Документ_Касса_ОткрытиеСмены Откр
+ Документ_Касса_ОткрытиеСмены Откр (nolock)
 WHERE
  Откр.ПометкаУдаления = 0
 GROUP BY
 КассаНомер, НомерСмены, КассаЗаводскойФН, КассаЗаводскойНомер
 HAVING
 COUNT(DISTINCT ОТКР.Ссылка) > 1`,
-		selected: 0
+		selected: 0, disabled:0
 	},
 	{
 		id: 5,
@@ -123,8 +124,8 @@ COUNT(DISTINCT ОТКР.Ссылка) > 1`,
 	  CAST(прото.Дата AS DATE) Дата
   INTO #t
   FROM
-	  Документ_ПротоколРасчетов прото
-	  JOIN Документ_Касса_ОткрытиеСмены смена
+	  Документ_ПротоколРасчетов прото (nolock)
+	  JOIN Документ_Касса_ОткрытиеСмены смена (nolock)
 	  ON прото.КассоваяСмена = смена.Ссылка
   WHERE прото.Фискализирован = 1
 
@@ -144,26 +145,51 @@ COUNT(DISTINCT ОТКР.Ссылка) > 1`,
 	  t1.КассаНомер = t2.КассаНомер AND
 	  t1.ПротоколРасчетов > t2.ПротоколРасчетов AND
 	  t1.Дата = t2.Дата`,
-		selected: 0
+		selected: 0, disabled:0
 	},
 	{
-		id: 71,
+		id: -71,
 		title: `Список ТТ`,
 		description: `
-ТТ, с которых собираются данные для всех этих отчетов
+ТТ, с которых собираются данные для всех этих отчетов.
+В колонке "Дата" - дата последнего чека.
 	`,
 		sql: `select top (1)
 иб.Код ИнформационнаяБаза, Дата, м.Наименование
 from
-справочник_фирмы ф
-join справочник_информационныеБазы иб on ф.ИнформационнаяБаза = иб.Ссылка
-join Справочник_МестаРеализации м on м.Ссылка = ф.МестоРеализации
-join документ_заказ д on м.ссылка = д.МестоРеализации
+справочник_фирмы ф (nolock)
+join справочник_информационныеБазы иб (nolock) on ф.ИнформационнаяБаза = иб.Ссылка
+join Справочник_МестаРеализации м (nolock) on м.Ссылка = ф.МестоРеализации
+join документ_заказ д (nolock) on м.ссылка = д.МестоРеализации
 --where
 -- ф.ПОметкаУдаления=0 and м.НАименование = 'КуулКлевер'
 ORDER BY
 Дата desc`,
-		selected: 0
+		selected: 0, disabled:0
+	},
+	{
+		id: 161,
+		title: `Сверка с ОФД`,
+		description: `Отчет отображает чеки, которые есть в ОФД, но отсутствуют в СУП ККМ ТТ. За текущий день.`,
+		sql: `http://report.cd.local:8813`,
+		selected: 0, disabled:0
+	},
+	{
+		id: 162,
+		title: `c2`,
+		description: `declare @t table(name varchar(max),minimum int,maximum int,config_value int, run_value int)
+
+insert into @t
+exec sp_configure 'c2 audit mode'
+
+select * from @t`,
+		sql: `declare @t table(name varchar(max),minimum int,maximum int,config_value int, run_value int)
+
+insert into @t
+exec sp_configure 'c2 audit mode'
+
+select * from @t`,
+		selected: 0, disabled:0
 	}
-].sort((v,v2)=>v.id<v2.id ? -1 : 0);
+].sort((v, v2) => v.id < v2.id ? -1 : 0);
 export default reports;

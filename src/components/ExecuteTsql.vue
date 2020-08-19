@@ -50,7 +50,7 @@
 								<v-text-field
 									label="backend"
 									v-model="backendUrl"
-									hint="ws://10.1.2.2:3002"
+									hint="ws://report.cd.local:3002"
 								>
 								</v-text-field>
 
@@ -62,7 +62,7 @@
 
 								<v-switch v-model="dark" dense label="dark"></v-switch>
 							</v-form>
-						</v-container>		
+						</v-container>
 					</v-card-text>
 
 					<v-card-actions>
@@ -184,7 +184,7 @@ export default {
 		PreferencesDialog: false,
 		canDo_: false,
 		showGroupBy: false,
-		backendUrl: `ws://10.1.2.2:3002`,
+		backendUrl: `ws://report.cd.local:3002`,
 		isStarted: false,
 		banner: false,
 		timerId: 0,
